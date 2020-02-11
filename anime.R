@@ -1,22 +1,25 @@
-install.packages('jsonlite')
-install.packages('tidyverse')
+install.packages(c('jsonlite', 'tidyverse', 'rvest'))
 
 library('jsonlite')
 library('tidyverse')
+library('rvest')
+
 
 individus <- 250 %/% 50
 
 for (i in 1:individus) {
-	url_req <- paste("https://api.jikan.moe/v3/top/anime/", i, sep="")
-	list_json1 <- fromJSON(url_req)
+  # .../top/type/page/subtype
+	url_req <- paste("https://api.jikan.moe/v3/top/anime/", i, "/movie", sep="")
+	list_json <- fromJSON(url_req)
 
-	if (exists('tibble1') == FALSE){
-	  tibble1 <- tibble()
-	  tibble1 <- as_tibble(rbind(tibble1, as_tibble(list_json1$top)))
-	} else {
-	  tibble1 <- as_tibble(rbind(tibble1, as_tibble(list_json1$top)))
+	if (exists('t_anime') == FALSE) {
+	  t_anime <- tibble()
 	}
+	# Concatener par ligne (pour 5 pages de 50 individus)
+	t_anime <- as_tibble(rbind(t_anime, as_tibble(list_json$top)))
 }
 
-#df_json1 <- as_tibble(inter_json, validate = F) 
-#print(df_json1)
+# Supprimer colonnes inutiles
+cols.to.drop <- c('type', 'image_url', 'episodes')
+t_anime <- t_anime %>% select(-one_of(cols.to.drop))
+
