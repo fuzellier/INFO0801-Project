@@ -23,3 +23,17 @@ for (i in 1:individus) {
 cols.to.drop <- c('type', 'image_url', 'episodes')
 t_anime <- t_anime %>% select(-one_of(cols.to.drop))
 
+# id pour l'url
+anime_id <- as.list(t_anime$mal_id)
+
+# Test de fonction web scrapping pour les genres
+serieData <- function(n) {
+  url <- paste("https://myanimelist.net/anime/", anime_id[[n]], sep="")
+  webpage <- read_html(url)
+  
+  # Recuperer les genres sous forme de liste
+  genres <- webpage %>% html_nodes("[itemprop='genre']") %>% html_text() %>% as.list()
+  
+  return(genres)
+}
+
