@@ -37,3 +37,17 @@ serieData <- function(n) {
   return(genres)
 }
 
+# Ajout d'une colonne genre au tibble
+t_anime <- add_column(t_anime, genres=0)
+
+# Remplir la colonne 'genres'
+for (i in 1:nrow(t_anime)) {
+  l <- serieData(i)
+  Sys.sleep(runif(1,0.75,1.5))
+  t_anime$genres[i] <- list(l)
+}
+
+
+# A voir pour Studio, Source, Duration, Favorite si possible
+
+
