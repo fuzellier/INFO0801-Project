@@ -43,6 +43,8 @@ serieData <- function(n, session) {
   url <- paste("https://myanimelist.net/anime/", anime_id[[n]], sep="")
   webpage <- nod(session, url) %>% scrape(verbose=TRUE)
   
+  # Nb de membres ayant attribues une note
+  rating_count <- webpage %>% html_nodes("[itemprop='ratingCount']") %>% html_text(trim=T) %>% as.integer()
   # Recuperer les genres
   genres <- webpage %>% html_nodes("[itemprop='genre']") %>% html_text(trim=T) %>% list()
   # Recuperer le nom du studio
@@ -52,20 +54,21 @@ serieData <- function(n, session) {
   # Recuperer le rang global
   global_rank <- webpage %>% html_nodes(".ranked strong") %>% html_text(trim=T) %>% substr(2, nchar(webpage))
   
-  return(list(genres, studio, popularity, global_rank))
+  return(list(rating_count, genres, studio, popularity, global_rank))
 }
 
 # Ajout de nouvelles colonnes
-t_anime <- add_column(t_anime, genres='', studio='', 
-                      popularity='', global_rank='')
+t_anime <- add_column(t_anime, rating_count='', genres='', 
+                      studio='', popularity='', global_rank='')
 
 # Remplir les nouvelles colonnes
 for (i in 1:nrow(t_anime)) {
   l <- serieData(i, session)
-  if(length(l[[1]]) > 0){t_anime$genres[i] <- l[[1]]}
-  if(length(l[[2]]) > 0){t_anime$studio[i] <- l[[2]]}
-  if(length(l[[3]]) > 0){t_anime$popularity[i] <- l[[3]]}
-  if(length(l[[4]]) > 0){t_anime$global_rank[i] <- l[[4]]}
+  if(length(l[[1]]) > 0){t_anime$rating_count[i] <- l[[1]]}
+  if(length(l[[2]]) > 0){t_anime$genres[i] <- l[[2]]}
+  if(length(l[[3]]) > 0){t_anime$studio[i] <- l[[3]]}
+  if(length(l[[4]]) > 0){t_anime$popularity[i] <- l[[4]]}
+  if(length(l[[5]]) > 0){t_anime$global_rank[i] <- l[[5]]}
 }
 
 # A voir pour Source, Duration, Favorite si possible
