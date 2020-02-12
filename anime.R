@@ -52,14 +52,16 @@ serieData <- function(n, session) {
   # Recuperer le rang en termes de popularite
   popularity <- webpage %>% html_nodes(".popularity strong") %>% html_text(trim=T) %>% substr(2, nchar(webpage)) %>% as.integer()
   # Recuperer le rang global
-  global_rank <- webpage %>% html_nodes(".ranked strong") %>% html_text(trim=T) %>% substr(2, nchar(webpage))
-  
-  return(list(rating_count, genres, studio, popularity, global_rank))
+  global_rank <- webpage %>% html_nodes(".ranked strong") %>% html_text(trim=T) %>% substr(2, nchar(webpage)) %>% as.integer()
+  # Premiere recommendation du film en question
+  reco <- webpage %>% html_nodes(xpath='//*[@id="anime_recommendation"]/div[3]/ul/li[1]/a/span[1]') %>% html_text(trim=T)
+
+  return(list(rating_count, genres, studio, popularity, global_rank, reco))
 }
 
 # Ajout de nouvelles colonnes
 t_anime <- add_column(t_anime, rating_count='', genres='', 
-                      studio='', popularity='', global_rank='')
+                      studio='', popularity='', global_rank='', reco='')
 
 # Remplir les nouvelles colonnes
 for (i in 1:nrow(t_anime)) {
@@ -69,9 +71,10 @@ for (i in 1:nrow(t_anime)) {
   if(length(l[[3]]) > 0){t_anime$studio[i] <- l[[3]]}
   if(length(l[[4]]) > 0){t_anime$popularity[i] <- l[[4]]}
   if(length(l[[5]]) > 0){t_anime$global_rank[i] <- l[[5]]}
+  if(length(l[[6]]) > 0){t_anime$reco[i] <- l[[6]]}
 }
 
-# A voir pour Source, Duration, Favorite si possible
+
 
 
 
