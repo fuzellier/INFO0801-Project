@@ -1,22 +1,34 @@
-install.packages(c('jsonlite', 'tidyverse', 'rvest'))
+#################################
+#                               #
+# Dataset films d'animation jap #
+#                               #
+#################################
 
-library('jsonlite')
-library('tidyverse')
-library('rvest')
+
+install.packages(c('jsonlite', 'tidyverse', 'rvest', 'polite'))
+
+library(jsonlite)
+library(tidyverse)
+library(rvest)    # scrape a site
+library(polite)   # respectful webscraping
+
+# Make our intentions known to the website
+mal_bow <- bow(url="https://myanimelist.net/", force=T)
+print(mal_bow)
 
 
 individus <- 250 %/% 50
 
 for (i in 1:individus) {
   # .../top/type/page/subtype
-	url_req <- paste("https://api.jikan.moe/v3/top/anime/", i, "/movie", sep="")
-	list_json <- fromJSON(url_req)
+  url_req <- paste("https://api.jikan.moe/v3/top/anime/", i, "/movie", sep="")
+  list_json <- fromJSON(url_req)
 
-	if (exists('t_anime') == FALSE) {
+  if (exists('t_anime') == FALSE) {
 	  t_anime <- tibble()
-	}
-	# Concatener par ligne (pour 5 pages de 50 individus)
-	t_anime <- as_tibble(rbind(t_anime, as_tibble(list_json$top)))
+  }
+  # Concatener par ligne (pour 5 pages de 50 individus)
+  t_anime <- as_tibble(rbind(t_anime, as_tibble(list_json$top)))
 }
 
 # Supprimer colonnes inutiles
@@ -31,23 +43,27 @@ serieData <- function(n) {
   url <- paste("https://myanimelist.net/anime/", anime_id[[n]], sep="")
   webpage <- read_html(url)
   
-  # Recuperer les genres sous forme de liste
-  genres <- webpage %>% html_nodes("[itemprop='genre']") %>% html_text() %>% as.list()
+  # Recuperer les genres
+  genres <- webpage %>% html_nodes("[itemprop='genre']") %>% html_text(trim=T) %>% list()
+  # Recuperer le nom du studio
+  studio <- webpage %>% html_nodes(".studio") %>% html_text(trim=T)
+  # Recuper le rang en termes de popularite
+  popularity <- webpage %>% html_nodes(".popularity strong") %>% html_text(trim=T) %>% substr(2, nchar(webpage)) %>% as.integer()
   
-  return(genres)
+  return(list(genres, studio, popularity))
 }
 
-# Ajout d'une colonne genre au tibble
-t_anime <- add_column(t_anime, genres=0)
+# Ajout de colonnes pour le web scrapping
+t_anime <- add_column(t_anime, genres='', studio='', popularity='')
 
-# Remplir la colonne 'genres'
+# Remplir les nouvelles colonnes
 for (i in 1:nrow(t_anime)) {
   l <- serieData(i)
-  Sys.sleep(runif(1,0.75,1.5))
-  t_anime$genres[i] <- list(l)
+  t_anime$genres[i] <- l[[1]]
+  t_anime$studio[i] <- l[[2]]
+  t_anime$popularity[i] <- l[[3]]
 }
 
-
-# A voir pour Studio, Source, Duration, Favorite si possible
+# A voir pour Source, Duration, Favorite si possible
 
 
