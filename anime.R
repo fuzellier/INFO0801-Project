@@ -9,17 +9,17 @@ install.packages(c('jsonlite', 'tidyverse', 'rvest', 'polite', 'data.table'))
 
 library(jsonlite)
 library(tidyverse)
-library(rvest)    # scrape a site
-library(polite)   # respectful webscraping
+library(rvest)      # scrape a site
+library(polite)     # respectful webscraping
 library(data.table)
 
 # Make our intentions known to the website
 session <- bow(url="https://myanimelist.net/", force=T)
 
+# Nb pages (et donc iterations)
+iter <- 250 %/% 50
 
-individus <- 250 %/% 50
-
-for (i in 1:individus) {
+for (i in 1:iter) {
   # .../top/type/page/subtype
   url_req <- paste("https://api.jikan.moe/v3/top/anime/", i, "/movie", sep="")
   list_json <- fromJSON(url_req)
@@ -55,12 +55,12 @@ serieData <- function(n, session) {
   return(list(genres, studio, popularity, global_rank))
 }
 
-# Ajout de colonnes pour le web scrapping
+# Ajout de nouvelles colonnes
 t_anime <- add_column(t_anime, genres='', studio='', 
                       popularity='', global_rank='')
 
 # Remplir les nouvelles colonnes
-for (i in 1:3) {
+for (i in 1:nrow(t_anime)) {
   l <- serieData(i, session)
   if(length(l[[1]]) > 0){t_anime$genres[i] <- l[[1]]}
   if(length(l[[2]]) > 0){t_anime$studio[i] <- l[[2]]}
@@ -69,4 +69,17 @@ for (i in 1:3) {
 }
 
 # A voir pour Source, Duration, Favorite si possible
+
+
+
+# Current directory
+curr_dir <- dirname(rstudioapi::getSourceEditorContext()$path)
+
+# Save a single R object in rds file
+saveRDS(t_anime, file=paste0(curr_dir, '/anime.rds'))
+# Restore it under a different name
+anime_tbl <- readRDS(file=paste0(curr_dir, '/anime.rds'))
+
+# Write in TSV file, handle list-type column thanks to fwrite
+fwrite(t_anime, file=paste0(curr_dir, '/anime.tsv'), sep="\t", sep2=c("", " ", ""))
 
