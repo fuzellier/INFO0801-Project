@@ -14,7 +14,7 @@ library(polite)     # respectful webscraping
 library(data.table)
 
 # Make our intentions known to the website
-session <- bow(url="https://myanimelist.net/", force=T)
+session <- bow(url="https://myanimelist.net/", force=TRUE)
 
 # Nb pages (et donc iterations)
 iter <- 250 %/% 50
@@ -47,8 +47,8 @@ serieData <- function(n, session) {
   rating_count <- webpage %>% html_nodes("[itemprop='ratingCount']") %>% html_text(trim=T) %>% as.integer()
   # Recuperer les genres
   genres <- webpage %>% html_nodes("[itemprop='genre']") %>% html_text(trim=T) %>% list()
-  # Recuperer le nom du studio
-  studio <- webpage %>% html_nodes(".studio") %>% html_text(trim=T)
+  # Recuperer le nom du studio principal
+  studio <- webpage %>% html_nodes(".studio a:first-child") %>% html_text(trim=T)
   # Recuperer le rang en termes de popularite
   popularity <- webpage %>% html_nodes(".popularity strong") %>% html_text(trim=T) %>% substr(2, nchar(webpage)) %>% as.integer()
   # Recuperer le rang global
@@ -73,10 +73,6 @@ for (i in 1:nrow(t_anime)) {
   if(length(l[[5]]) > 0){t_anime$global_rank[i] <- l[[5]]}
   if(length(l[[6]]) > 0){t_anime$reco[i] <- l[[6]]}
 }
-
-
-
-
 
 # Current directory
 curr_dir <- dirname(rstudioapi::getSourceEditorContext()$path)
