@@ -74,6 +74,12 @@ for (i in 1:nrow(t_anime)) {
   if(length(l[[6]]) > 0){t_anime$reco[i] <- l[[6]]}
 }
 
+
+
+# gerer donnees manquantes............
+
+
+
 # Current directory
 curr_dir <- dirname(rstudioapi::getSourceEditorContext()$path)
 
