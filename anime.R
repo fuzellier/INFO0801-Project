@@ -6,12 +6,14 @@
 
 
 install.packages(c('jsonlite', 'tidyverse', 'rvest', 'polite', 'data.table'))
+install.packages("openxlsx", dependencies = TRUE)
 
 library(jsonlite)
 library(tidyverse)
 library(rvest)      # scrape a site
 library(polite)     # respectful webscraping
 library(data.table)
+library(openxlsx)
 
 # Make our intentions known to the website
 session <- bow(url="https://myanimelist.net/", force=TRUE)
@@ -32,8 +34,13 @@ for (i in 1:iter) {
 }
 
 # Supprimer colonnes inutiles
-cols.to.drop <- c('type', 'image_url', 'episodes')
+cols.to.drop <- c('type', 'image_url', 'episodes', 'end_date')
 t_anime <- t_anime %>% select(-one_of(cols.to.drop))
+
+# Changement du format de date
+startdate <- parse_date_time(t_anime$start_date, "my")
+newdate <- format(startdate, format="%m/%Y")
+t_anime$start_date <- newdate
 
 # id pour l'url
 anime_id <- as.list(t_anime$mal_id)
@@ -60,18 +67,17 @@ serieData <- function(n, session) {
 }
 
 # Ajout de nouvelles colonnes
-t_anime <- add_column(t_anime, rating_count='', genres='', 
-                      studio='', popularity='', global_rank='', reco='')
+t_anime <- add_column(t_anime, rating_count='', genres='', studio='', popularity='', global_rank='', reco='')
 
 # Remplir les nouvelles colonnes
 for (i in 1:nrow(t_anime)) {
   l <- serieData(i, session)
-  if(length(l[[1]]) > 0){t_anime$rating_count[i] <- l[[1]]}
-  if(length(l[[2]]) > 0){t_anime$genres[i] <- l[[2]]}
-  if(length(l[[3]]) > 0){t_anime$studio[i] <- l[[3]]}
-  if(length(l[[4]]) > 0){t_anime$popularity[i] <- l[[4]]}
-  if(length(l[[5]]) > 0){t_anime$global_rank[i] <- l[[5]]}
-  if(length(l[[6]]) > 0){t_anime$reco[i] <- l[[6]]}
+  if(length(l[[1]]) > 0){t_anime$rating_count[i] <- l[[1]]}else{t_anime$rating_count[i] <- "Not Available"}
+  if(length(l[[2]]) > 0){t_anime$genres[i] <- l[[2]]}else{t_anime$genres[i] <- "Not Available"}
+  if(length(l[[3]]) > 0){t_anime$studio[i] <- l[[3]]}else{t_anime$studio[i] <- "Not Available"}
+  if(length(l[[4]]) > 0){t_anime$popularity[i] <- l[[4]]}else{t_anime$popularity[i] <- "Not Available"}
+  if(length(l[[5]]) > 0){t_anime$global_rank[i] <- l[[5]]}else{t_anime$global_rank[i] <- "Not Available"}
+  if(length(l[[6]]) > 0){t_anime$reco[i] <- l[[6]]}else{t_anime$reco[i] <- "Not Available"}
 }
 
 
@@ -91,3 +97,5 @@ anime_tbl <- readRDS(file=paste0(curr_dir, '/anime.rds'))
 # Write in TSV file, handle list-type column thanks to fwrite
 fwrite(t_anime, file=paste0(curr_dir, '/anime.tsv'), sep="\t", sep2=c("", " ", ""))
 
+# Write in XLSX file
+openxlsx::write.xlsx(anime_tbl, file = "/Users/antoi/Desktop/manga/INFO0801-Project/anime.xlsx")
