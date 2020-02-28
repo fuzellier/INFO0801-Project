@@ -42,9 +42,7 @@ t_anime <- t_anime %>% select(-one_of(cols.to.drop))
 nb_cols <- ncol(t_anime)
 
 # Changement du format de date
-startdate <- parse_date_time(t_anime$start_date, "my")
-newdate <- format(startdate, format="%m-%Y")
-t_anime$start_date <- newdate
+t_anime$start_date <- parse_date_time(t_anime$start_date, 'my') %>% format(format='%m-%Y')
 
 # id pour l'url
 anime_id <- as.list(t_anime$mal_id)
@@ -86,13 +84,13 @@ animeData <- function(n, session) {
   webpage <- nod(session, url) %>% scrape(verbose=TRUE)
   
   # Nb de membres ayant attribues une note
-  rating_count <- webpage %>% html_nodes("[itemprop='ratingCount']") %>% html_text(trim=T) %>% as.integer()
+  rating_count <- webpage %>% html_nodes("[itemprop='ratingCount']") %>% html_text(trim=T)
   # Recuperer le nom du studio principal
   studio <- webpage %>% html_nodes(".studio a:first-child") %>% html_text(trim=T)
   # Recuperer le rang en termes de popularite
-  popularity <- webpage %>% html_nodes(".popularity strong") %>% html_text(trim=T) %>% substr(2, nchar(webpage)) %>% as.integer()
+  popularity <- webpage %>% html_nodes(".popularity strong") %>% html_text(trim=T) %>% substr(2, nchar(webpage))
   # Recuperer le rang global
-  global_rank <- webpage %>% html_nodes(".ranked strong") %>% html_text(trim=T) %>% substr(2, nchar(webpage)) %>% as.integer()
+  global_rank <- webpage %>% html_nodes(".ranked strong") %>% html_text(trim=T) %>% substr(2, nchar(webpage))
   
   return(list(rating_count, studio, popularity, global_rank))
 }
@@ -114,11 +112,13 @@ for (i in 1:nrow(t_anime)) {
   }
 }
 
+# Changement de type vers int pour certaines colonnes
+t_anime %>% mutate_at(vars(favorites, rating_count, popularity, global_rank), as.integer)
 
 # Ajout d'une colonne 'genres'
 t_anime <- add_column(t_anime, genres='')
 
-# Remplir colonnes 'genres'
+# Remplir colonne 'genres'
 for (i in 1:nrow(t_anime)) {
   url_genres <- paste("https://myanimelist.net/anime/", anime_id[[i]], sep="")
   webpage <- nod(session, url_genres) %>% scrape(verbose=TRUE)
@@ -139,5 +139,10 @@ saveRDS(t_anime, file=paste0(curr_dir, '/anime.rds'))
 # Restore it under a different name
 anime_tbl <- readRDS(file=paste0(curr_dir, '/anime.rds'))
 
+# Write in TSV file, handle list-type column thanks to fwrite
+fwrite(t_anime, file=paste0(curr_dir, '/anime.tsv'), sep="\t", sep2=c("", ",", ""))
+
 # Write in XLSX file
 openxlsx::write.xlsx(anime_tbl, file=paste0(curr_dir, "/anime.xlsx"))
+
+
