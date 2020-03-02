@@ -83,7 +83,7 @@ animeData <- function(n, session) {
   url <- paste("https://myanimelist.net/anime/", anime_id[[n]], sep="")
   webpage <- nod(session, url) %>% scrape(verbose=TRUE)
   
-  # Nb de membres ayant attribues une note
+  # Nb de membres ayant attribue une note
   rating_count <- webpage %>% html_nodes("[itemprop='ratingCount']") %>% html_text(trim=T)
   # Recuperer le nom du studio principal
   studio <- webpage %>% html_nodes(".studio a:first-child") %>% html_text(trim=T)
@@ -113,7 +113,7 @@ for (i in 1:nrow(t_anime)) {
 }
 
 # Changement de type vers int pour certaines colonnes
-t_anime %>% mutate_at(vars(favorites, rating_count, popularity, global_rank), as.integer)
+t_anime <- t_anime %>% mutate_at(vars(favorites, rating_count, popularity, global_rank), as.integer)
 
 # Ajout d'une colonne 'genres'
 t_anime <- add_column(t_anime, genres='')
